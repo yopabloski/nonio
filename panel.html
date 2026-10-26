@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Nonio · Panel docente</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..700,50;1,9..144,400..700,50&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/panel.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+</head>
+<body class="panel-body">
+
+<!-- Puerta docente -->
+<section id="puerta" class="puerta" hidden>
+  <div class="puerta-card">
+    <svg class="marca-sello grande" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="15" fill="#0F1D2B"/><path d="M11 45H53M12.5 45V38M22.25 45V39.5M32 45V38M41.75 45V39.5M51.5 45V38" stroke="#EEF1EC" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M41.75 31V38" stroke="#F2B632" stroke-width="3" stroke-linecap="round"/><circle cx="41.75" cy="22.5" r="7.5" fill="#F2B632"/></svg>
+    <p class="kicker">Acceso docente</p>
+    <h1>Panel de investigación</h1>
+    <p>Configuración de momentos, seguimiento de respuestas, análisis y exportación. Entra con tu cuenta de Google autorizada.</p>
+    <button class="btn" id="btnGoogle" type="button">Entrar con Google <span class="flecha">→</span></button>
+    <p class="puerta-msg" id="puertaMsg" role="status"></p>
+  </div>
+</section>
+
+<div class="shell" id="shell" hidden>
+  <aside class="lateral">
+    <a class="marca clara" href="./panel.html">
+      <svg class="marca-sello" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M11 45H53M12.5 45V38M22.25 45V39.5M32 45V38M41.75 45V39.5M51.5 45V38" stroke="#EEF1EC" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M41.75 31V38" stroke="#F2B632" stroke-width="3" stroke-linecap="round"/><circle cx="41.75" cy="22.5" r="7.5" fill="#F2B632"/></svg>
+      <span><b>Nonio</b><small>Panel docente</small></span>
+    </a>
+    <nav class="nav" id="nav" aria-label="Secciones">
+      <button data-sec="resumen" class="activo"><span class="mono">01</span>Resumen</button>
+      <button data-sec="momentos"><span class="mono">02</span>Momentos</button>
+      <button data-sec="nomina"><span class="mono">03</span>Nómina</button>
+      <button data-sec="participantes"><span class="mono">04</span>Participantes</button>
+      <button data-sec="analisis"><span class="mono">05</span>Análisis</button>
+      <button data-sec="exportar"><span class="mono">06</span>Exportar</button>
+    </nav>
+    <div class="lateral-pie">
+      <div id="demoTools" class="demo-tools" hidden>
+        <p class="kicker">Modo demo</p>
+        <button class="btn chico sec clara" id="btnSembrar" type="button">Cargar datos de ejemplo</button>
+        <button class="btn chico sec clara" id="btnVaciar" type="button">Vaciar demo</button>
+      </div>
+      <p class="usuario mono" id="usuario"></p>
+      <div class="lateral-acciones">
+        <button class="enlace-claro" id="btnRefrescar" type="button">↻ Actualizar</button>
+        <button class="enlace-claro" id="btnSalirDocente" type="button">Salir</button>
+      </div>
+      <p class="sync mono" id="sync"></p>
+    </div>
+  </aside>
+
+  <main class="principal">
+    <!-- 01 Resumen -->
+    <section class="seccion" id="sec-resumen">
+      <header class="sec-cabeza">
+        <div><p class="kicker" id="resTitulo"></p><h1>Resumen</h1></div>
+        <p class="sec-nota" id="resNota"></p>
+      </header>
+      <div class="kpis" id="kpis"></div>
+      <div class="rejilla-2">
+        <article class="panel-card">
+          <header><h2>Avance por momento</h2><p>Cuestionarios enviados sobre la cohorte</p></header>
+          <div id="avance"></div>
+        </article>
+        <article class="panel-card">
+          <header><h2>Envíos por día</h2><p>Cuestionarios enviados, todos los instrumentos</p></header>
+          <div id="porDia" class="grafico"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 02 Momentos -->
+    <section class="seccion" id="sec-momentos" hidden>
+      <header class="sec-cabeza">
+        <div><p class="kicker">Configuración</p><h1>Momentos</h1></div>
+        <div class="sec-acciones">
+          <button class="btn sec" id="btnNuevoMomento" type="button">+ Agregar momento</button>
+          <button class="btn" id="btnGuardarConfig" type="button">Guardar cambios</button>
+        </div>
+      </header>
+      <article class="panel-card ajustes">
+        <label class="campo"><span>Nombre del estudio</span><input id="cfgTitulo"></label>
+        <label class="campo"><span>Cohorte actual</span><input id="cfgCohorteId" class="mono" placeholder="2026" maxlength="12"></label>
+        <label class="campo"><span>Tamaño de la cohorte</span><input id="cfgCohorte" type="number" min="1" class="mono"></label>
+        <label class="interruptor">
+          <input type="checkbox" id="cfgOmitir">
+          <span class="riel" aria-hidden="true"></span>
+          <span><b>Permitir “Prefiero no responder”</b><small>El consentimiento V4.0 declara que el participante puede omitir cualquier pregunta. Con esto activo, todas las preguntas siguen siendo obligatorias, pero una de las respuestas posibles es omitir.</small></span>
+        </label>
+      </article>
+      <article class="panel-card diseno" id="diseno"></article>
+      <div id="momentos" class="momentos"></div>
+    </section>
+
+    <!-- 03 Nómina -->
+    <section class="seccion" id="sec-nomina" hidden>
+      <header class="sec-cabeza">
+        <div><p class="kicker">Contrabalanceo</p><h1>Nómina</h1></div>
+        <div class="sec-acciones">
+          <button class="btn sec" id="btnRegistroAleat" type="button">Registro de aleatorización (.csv)</button>
+          <button class="btn" id="btnAleatorizar" type="button">Aleatorizar órdenes</button>
+        </div>
+      </header>
+      <div class="kpis" id="nomKpis"></div>
+      <div class="rejilla-2" style="margin-top:18px">
+        <article class="panel-card">
+          <header><h2>Cargar estudiantes</h2><p>Listas de curso de la UDD (puedes elegir varias a la vez: la sección se toma del nombre del archivo), o cualquier Excel/CSV con una columna de correo. Opcional: nombre, RUT, matrícula y orden (1 o 2). También puedes pegar una lista de correos.</p></header>
+          <label class="archivo"><input type="file" id="nomArchivo" accept=".csv,.xlsx,.xls,.txt" multiple><span>Elegir archivos…</span></label>
+          <textarea id="nomTexto" class="pegar" rows="5" placeholder="o pega aquí: un correo por línea, o columnas copiadas desde Excel"></textarea>
+          <div class="nom-vista" id="nomVista"></div>
+          <button class="btn" id="btnNomAgregar" type="button" disabled>Agregar a la nómina</button>
+        </article>
+        <article class="panel-card">
+          <header><h2>Cómo funciona</h2></header>
+          <ol class="pasos">
+            <li><b>Carga la nómina</b> de la cohorte. Quienes ya estén se actualizan sin perder su orden.</li>
+            <li><b>Aleatoriza:</b> a cada estudiante sin orden se le asigna Orden 1 u Orden 2 con probabilidad 1/2 (aleatorización simple, protocolo V7.0). Queda un registro con fecha, semilla y totales para reproducirla.</li>
+            <li>En cada sesión, el estudiante entra con el código y la app le muestra <b>solo el bloque que le corresponde</b>.</li>
+            <li>Si entra alguien que <b>no está en la nómina</b>, se le asigna un orden al azar en ese momento y aparece aquí con origen "al entrar".</li>
+          </ol>
+          <p class="explica">Puedes cambiar el orden de alguien a mano, pero queda registrado como "manual" y, si ya respondió la sesión 1, se rompe el contrabalanceo de esa persona.</p>
+        </article>
+      </div>
+      <div class="sec-cabeza" style="margin-top:26px;border:0;padding:0">
+        <h2 style="font-size:24px">Estudiantes</h2>
+        <div class="filtros"><input type="search" id="nomBuscar" class="buscador" placeholder="Buscar correo o nombre"><select id="nomFiltro" class="selector"><option value="todos">Todos</option><option value="1">Orden 1</option><option value="2">Orden 2</option><option value="sin">Sin orden</option><option value="entrada">Asignados al entrar</option><option value="noreg">Sin registrarse</option></select></div>
+      </div>
+      <div class="tabla-envoltura"><table class="tabla" id="tablaNomina"></table></div>
+    </section>
+
+    <!-- 04 Participantes -->
+    <section class="seccion" id="sec-participantes" hidden>
+      <header class="sec-cabeza">
+        <div><p class="kicker">Seguimiento</p><h1>Participantes</h1></div>
+        <div class="filtros">
+          <input type="search" id="buscar" placeholder="Buscar por nombre, correo o RUT" class="buscador">
+          <select id="filtroCi" class="selector">
+            <option value="todos">Todos</option>
+            <option value="acepta">Aceptan</option>
+            <option value="rechaza">No aceptan</option>
+            <option value="pendiente">Sin decisión</option>
+          </select>
+        </div>
+      </header>
+      <div class="tabla-envoltura"><table class="tabla" id="tablaPart"></table></div>
+      <p class="sec-nota" id="partNota"></p>
+    </section>
+
+    <!-- 04 Análisis -->
+    <section class="seccion" id="sec-analisis" hidden>
+      <header class="sec-cabeza">
+        <div><p class="kicker">Descriptivos, psicometría y perfiles</p><h1>Análisis</h1></div>
+        <div class="filtros">
+          <label class="filtro-etq">Cohorte <select id="anCohorte" class="selector"></select></label>
+          <label class="interruptor mini-int"><input type="checkbox" id="anExcluir"><span class="riel" aria-hidden="true"></span><span><b>Excluir baja calidad</b></span></label>
+        </div>
+      </header>
+      <nav class="an-tabs" id="anTabs" aria-label="Vistas de análisis">
+        <button type="button" data-tab="cohorte" aria-pressed="true"><span class="mono">A</span>Foto de la cohorte</button>
+        <button type="button" data-tab="instrumento" aria-pressed="false"><span class="mono">B</span>Por instrumento</button>
+        <button type="button" data-tab="relaciones" aria-pressed="false"><span class="mono">C</span>Relaciones</button>
+        <button type="button" data-tab="perfiles" aria-pressed="false"><span class="mono">D</span>Perfiles y grupos</button>
+        <button type="button" data-tab="calidad" aria-pressed="false"><span class="mono">E</span>Calidad de respuesta</button>
+      </nav>
+      <p class="sec-nota" id="anNota"></p>
+      <div id="analisis"></div>
+    </section>
+
+    <!-- 05 Exportar -->
+    <section class="seccion" id="sec-exportar" hidden>
+      <header class="sec-cabeza">
+        <div><p class="kicker">Descargas</p><h1>Exportar</h1></div>
+      </header>
+      <article class="panel-card export-opciones">
+        <div>
+          <p class="kicker">Momentos</p>
+          <div id="exMomentos" class="chips"></div>
+        </div>
+        <label class="interruptor"><input type="checkbox" id="exEnviados" checked><span class="riel" aria-hidden="true"></span><span><b>Solo cuestionarios enviados</b><small>Si lo desactivas se incluyen borradores, con su estado en la columna _ESTADO.</small></span></label>
+        <label class="interruptor"><input type="checkbox" id="exPorEst" checked><span class="riel" aria-hidden="true"></span><span><b>Una fila por estudiante</b><small>Une las dos sesiones: cada instrumento trae la sesión en que se respondió. Apágalo para tener una fila por estudiante y sesión.</small></span></label>
+        <label class="interruptor"><input type="checkbox" id="exFuera"><span class="riel" aria-hidden="true"></span><span><b>Incluir estudiantes fuera de criterio</b><small>Quienes están en la nómina con matrícula de otro año de ingreso. Por defecto quedan fuera; si los incluyes, la columna EN_CRITERIO los identifica.</small></span></label>
+        <label class="interruptor"><input type="checkbox" id="exSeud"><span class="riel" aria-hidden="true"></span><span><b>Seudonimizar</b><small>Quita correo, nombre y RUT. El ID es estable y se puede cruzar con la llave de correspondencia.</small></span></label>
+        <p class="mono export-cuenta" id="exCuenta"></p>
+      </article>
+      <div class="descargas">
+        <button class="descarga" id="dlExcel" type="button" style="--c:var(--ipaa)">
+          <span class="ext mono">.xlsx</span><b>Excel completo</b>
+          <small>Hojas: cruda (etiquetas), recodificada (números y puntajes), puntajes, participantes y libro de códigos.</small>
+        </button>
+        <button class="descarga" id="dlCsv" type="button" style="--c:var(--eme)">
+          <span class="ext mono">.csv</span><b>CSV recodificado</b>
+          <small>Una fila por participante y momento. Separador coma, UTF-8. Perdidos vacíos.</small>
+        </button>
+        <button class="descarga" id="dlSpss" type="button" style="--c:var(--perma)">
+          <span class="ext mono">.zip</span><b>Paquete JASP / SPSS</b>
+          <small>datos_jasp.csv, datos_spss.csv con sintaxis .sps (etiquetas, −99 perdido, nivel de medida) y libro de códigos.</small>
+        </button>
+        <button class="descarga" id="dlCruda" type="button" style="--c:var(--eapesa)">
+          <span class="ext mono">.csv</span><b>CSV crudo</b>
+          <small>Las respuestas con el texto exacto que vio el alumno.</small>
+        </button>
+      </div>
+      <div class="descargas-sec">
+        <button class="btn sec chico" id="dlLlave" type="button">Llave ID ↔ correo (.csv)</button>
+        <button class="btn sec chico" id="dlLibro" type="button">Libro de códigos (.csv)</button>
+        <button class="btn sec chico" id="dlJson" type="button">Respaldo completo (.json)</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<dialog id="dlgConfirmar">
+  <form method="dialog" class="dlg">
+    <p class="kicker" id="dlgKicker">Confirmar</p>
+    <h2 id="dlgTitulo"></h2>
+    <p id="dlgTexto"></p>
+    <div class="acciones">
+      <button class="btn sec" value="no">Cancelar</button>
+      <button class="btn" value="si" id="dlgSi">Confirmar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+<script type="module" src="js/panel.js"></script>
+</body>
+</html>

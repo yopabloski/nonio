@@ -1,0 +1,170 @@
+rules_version = '2';
+
+// Nonio · reglas de Firestore (proyecto Firebase dedicado).
+// Explicación de cada regla y qué evita: docs/SEGURIDAD.md
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/amaAdmins/$(request.auth.uid));
+    }
+    function config() { return get(/databases/$(database)/documents/amaConfig/estudio).data; }
+    function codigoValido(codigo) {
+      return codigo is string && exists(/databases/$(database)/documents/amaCodigos/$(codigo));
+    }
+    function correoUdd(c) { return c is string && c.matches('^[a-z0-9._%+-]+@udd[.]cl$'); }
+    function rutValido(r) { return r is string && r.matches('^[0-9]{7,8}-[0-9K]$'); }
+
+    // ---------- Padrón docente: solo consola / Admin SDK ----------
+    match /amaAdmins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list: if isAdmin();
+      allow write: if false;
+    }
+
+    // ---------- Configuración del estudio ----------
+    // Pública para leer: el alumno necesita saber qué instrumentos tiene el
+    // momento antes de responder. No contiene datos personales ni códigos.
+    match /amaConfig/{doc} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Códigos vigentes por momento (vista docente).
+    match /amaPrivado/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Código → momento. Se puede consultar un código concreto, nunca listar.
+    match /amaCodigos/{codigo} {
+      allow get: if signedIn();
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ---------- Participantes ----------
+    match /amaParticipantes/{correo} {
+      function miembro() {
+        return signedIn() && request.auth.uid in resource.data.uids;
+      }
+
+      // resource == null: el alumno puede comprobar si su correo es nuevo.
+      allow get: if isAdmin() || resource == null || miembro();
+      allow list: if isAdmin();
+
+      // Alta: correo @udd.cl igual al ID, RUT con formato, un único dispositivo
+      // dueño (el que crea) y un código de acceso vigente.
+      allow create: if signedIn()
+        && correoUdd(correo)
+        && request.resource.data.correo == correo
+        && rutValido(request.resource.data.rut)
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 3
+        && request.resource.data.nombre.size() < 120
+        && request.resource.data.uids == [request.auth.uid]
+        && codigoValido(request.resource.data.codigo)
+        && request.resource.data.keys().hasOnly(['correo', 'nombre', 'rut', 'codigo', 'uids', 'cohorte', 'creado', 'ultimoIngreso'])
+        && (!('cohorte' in request.resource.data) || request.resource.data.cohorte == ('cohorte' in config() ? string(config().cohorte) : ''));
+
+      // Miembro: solo consentimiento, código e ingreso. No puede cambiar
+      // correo, RUT, nombre ni la lista de dispositivos.
+      allow update: if isAdmin()
+        || (miembro()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['consentimiento', 'consentimientos', 'historialConsentimiento', 'codigo', 'ultimoIngreso'])
+            && (!('codigo' in request.resource.data) || codigoValido(request.resource.data.codigo)))
+        // Otro dispositivo reclama el correo: debe conocer el RUT registrado
+        // y un código vigente, y solo puede AÑADIRSE a uids.
+        || (signedIn()
+            && !(request.auth.uid in resource.data.uids)
+            && resource.data.uids.size() < 10
+            && request.resource.data.uids == resource.data.uids.concat([request.auth.uid])
+            && request.resource.data.rutIntento == resource.data.rut
+            && codigoValido(request.resource.data.codigo)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['uids', 'rutIntento', 'codigo', 'ultimoIngreso']));
+
+      allow delete: if isAdmin();
+
+      // ---------- Respuestas: una por momento e instrumento ----------
+      match /respuestas/{clave} {
+        function participante() {
+          return get(/databases/$(database)/documents/amaParticipantes/$(correo)).data;
+        }
+        function esDueno() {
+          return signedIn() && request.auth.uid in participante().uids;
+        }
+        // Diseño contrabalanceado: el instrumento debe pertenecer al bloque
+        // que corresponde al orden del estudiante (amaNomina) en esta sesión.
+        function instrumentoPermitido(m, i) {
+          let mo = config().momentos[m];
+          return ('diseno' in config() && config().diseno.tipo == 'contrabalanceado' && 'bloquePorOrden' in mo)
+            ? i in config().diseno.bloques[mo.bloquePorOrden[string(get(/databases/$(database)/documents/amaNomina/$(correo)).data.orden)]].instrumentos
+            : i in mo.instrumentos;
+        }
+        function momentoAbierto(m, i) {
+          return config().momentos[m].estado == 'abierto' && instrumentoPermitido(m, i);
+        }
+        function escrituraAlumno() {
+          let d = request.resource.data;
+          return esDueno()
+            && participante().consentimiento.acepta == true
+            && clave == d.momentoId + '__' + d.instrumentoId
+            && momentoAbierto(d.momentoId, d.instrumentoId)
+            && codigoValido(d.codigo)
+            && get(/databases/$(database)/documents/amaCodigos/$(d.codigo)).data.momentoId == d.momentoId
+            && d.estado in ['borrador', 'enviado']
+            && d.respuestas is map
+            && d.respuestas.size() <= 40
+            && !('reaperturas' in d && (resource == null || d.reaperturas != resource.data.reaperturas));
+        }
+
+        allow read: if isAdmin() || esDueno();
+        allow create: if escrituraAlumno();
+        // Una vez enviado queda bloqueado para el alumno. Solo un docente
+        // puede devolverlo a borrador (reabrir).
+        allow update: if isAdmin() || (escrituraAlumno() && resource.data.estado == 'borrador');
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ---------- Nómina (diseño contrabalanceado) ----------
+    // La carga y la aleatorización las hace un docente. Un estudiante solo puede
+    // leer su propio orden y, si no está en la nómina, recibir uno al azar al
+    // entrar (origen 'entrada'); nunca cambiar un orden ya asignado.
+    match /amaNomina/{correo} {
+      function miembroDe() {
+        return signedIn()
+          && exists(/databases/$(database)/documents/amaParticipantes/$(correo))
+          && request.auth.uid in get(/databases/$(database)/documents/amaParticipantes/$(correo)).data.uids;
+      }
+      function asignacionEntrada() {
+        let d = request.resource.data;
+        return miembroDe()
+          && d.correo == correo
+          && d.orden in [1, 2]
+          && d.origen == 'entrada';
+      }
+      allow get: if isAdmin() || miembroDe();
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        || (asignacionEntrada() && request.resource.data.keys().hasOnly(['correo', 'orden', 'origen', 'asignado']));
+      allow update: if isAdmin()
+        || (asignacionEntrada() && !('orden' in resource.data)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['correo', 'orden', 'origen', 'asignado']));
+      allow delete: if isAdmin();
+    }
+
+    match /amaAleatorizaciones/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Lectura global de respuestas para el panel docente.
+    match /{path=**}/respuestas/{clave} {
+      allow read: if isAdmin();
+    }
+  }
+}

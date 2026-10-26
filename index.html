@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1D2B">
+<title>Nonio · Cuestionarios</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..700,50;1,9..144,400..700,50&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/alumno.css">
+</head>
+<body>
+<div id="bandaDemo" class="banda-demo" hidden>Modo demo · las respuestas se guardan solo en este navegador · código DEMO-S1 o DEMO-S2</div>
+
+<header class="barra">
+  <a class="marca" href="./">
+    <svg class="marca-sello" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="15" fill="#0F1D2B"/><path d="M11 45H53M12.5 45V38M22.25 45V39.5M32 45V38M41.75 45V39.5M51.5 45V38" stroke="#EEF1EC" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M41.75 31V38" stroke="#F2B632" stroke-width="3" stroke-linecap="round"/><circle cx="41.75" cy="22.5" r="7.5" fill="#F2B632"/></svg>
+    <span><b>Nonio</b><small>Ingeniería Civil Industrial · UDD</small></span>
+  </a>
+  <div id="sesionChip" class="sesion-chip" hidden>
+    <span class="mono" id="sesionCorreo"></span>
+    <button type="button" id="btnSalir" class="enlace">Salir</button>
+  </div>
+</header>
+
+<main id="app" aria-live="polite">
+
+  <!-- 1 · Ingreso -->
+  <section id="vIngreso" class="vista ingreso">
+    <div class="ingreso-portada">
+      <p class="kicker">AMA-PERMA · Estudio 2026 · Primer año</p>
+      <h1>Cómo aprendes,<br><em>en cuatro escalas.</em></h1>
+      <p class="bajada">Motivación, autorregulación, autoeficacia y bienestar. Responde con calma: no hay respuestas correctas ni incorrectas.</p>
+      <ol class="escalas-lista" aria-label="Escalas del estudio">
+        <li style="--c:var(--eme)"><span class="mono">EME-E</span>Motivación</li>
+        <li style="--c:var(--ipaa)"><span class="mono">IPAA</span>Autorregulación</li>
+        <li style="--c:var(--eapesa)"><span class="mono">EAPESA</span>Autoeficacia</li>
+        <li style="--c:var(--perma)"><span class="mono">PERMA</span>Bienestar</li>
+      </ol>
+      <div class="regla" aria-hidden="true"></div>
+    </div>
+
+    <form id="formIngreso" class="tarjeta ingreso-form" novalidate>
+      <h2>Ingresa</h2>
+      <p class="nota">Usa tus datos reales: se usan para vincular tus respuestas con tu registro académico, como explica el consentimiento.</p>
+      <label class="campo">
+        <span>Correo institucional</span>
+        <input id="inCorreo" type="email" inputmode="email" autocomplete="email" placeholder="nombre.apellido@udd.cl" required>
+        <small class="ayuda" id="ayCorreo"></small>
+      </label>
+      <label class="campo">
+        <span>Nombre completo</span>
+        <input id="inNombre" type="text" autocomplete="name" placeholder="Nombre y apellidos" required>
+        <small class="ayuda" id="ayNombre"></small>
+      </label>
+      <div class="fila-2">
+        <label class="campo">
+          <span>RUT</span>
+          <input id="inRut" type="text" inputmode="text" autocomplete="off" placeholder="20.998.765-4" maxlength="12" required>
+          <small class="ayuda" id="ayRut"></small>
+        </label>
+        <label class="campo">
+          <span>Código de acceso</span>
+          <input id="inCodigo" type="text" autocomplete="off" autocapitalize="characters" placeholder="Te lo da tu profesor" required class="mono">
+          <small class="ayuda" id="ayCodigo"></small>
+        </label>
+      </div>
+      <button class="btn ancho" type="submit" id="btnIngresar">Ingresar <span class="flecha">→</span></button>
+      <p class="error-form" id="errIngreso" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- 2 · Consentimiento -->
+  <section id="vConsentimiento" class="vista consentimiento" hidden>
+    <article class="documento tarjeta">
+      <header>
+        <p class="kicker">Paso previo · <span id="ciVersion"></span></p>
+        <h1 id="ciTitulo"></h1>
+        <p class="documento-sub" id="ciSub"></p>
+      </header>
+      <div id="ciTexto" class="documento-texto"></div>
+      <p class="documento-cierre" id="ciCierre"></p>
+      <fieldset class="decision" id="ciDecision">
+        <legend class="sr">Tu decisión</legend>
+        <label class="opcion-ci"><input type="radio" name="ci" value="si"><span><b>Sí</b><em id="ciSi"></em></span></label>
+        <label class="opcion-ci"><input type="radio" name="ci" value="no"><span><b>No</b><em id="ciNo"></em></span></label>
+      </fieldset>
+      <div class="exclusion" id="ciExclusion">
+        <p class="exclusion-titulo" id="ciExclusionTitulo"></p>
+        <label class="exclusion-opcion"><input type="checkbox" id="ciExcluye" disabled><span id="ciExclusionTexto"></span></label>
+      </div>
+      <div class="documento-pie">
+        <p class="mono" id="ciFirma"></p>
+        <button class="btn" type="button" id="btnConsentir" disabled>Continuar <span class="flecha">→</span></button>
+      </div>
+    </article>
+  </section>
+
+  <!-- 3 · No acepta -->
+  <section id="vRechazo" class="vista mensaje" hidden>
+    <div class="tarjeta mensaje-tarjeta">
+      <p class="kicker">Registro guardado</p>
+      <h1>Gracias por tu tiempo.</h1>
+      <p>Registramos que no aceptas participar. No se te mostrarán los cuestionarios y esto no tiene ninguna consecuencia académica.</p>
+      <p class="nota">Si te equivocaste o cambias de opinión, puedes revisar tu decisión.</p>
+      <button class="btn sec" type="button" id="btnRevisarCi">Revisar mi decisión</button>
+    </div>
+  </section>
+
+  <!-- 4 · Momento activo -->
+  <section id="vMomento" class="vista momento" hidden>
+    <header class="momento-cabeza">
+      <div>
+        <p class="kicker" id="momKicker"></p>
+        <h1 id="momTitulo"></h1>
+        <p class="bajada" id="momBajada"></p>
+        <p class="bloque-chip" id="momBloque" hidden></p>
+      </div>
+      <div class="avance-anillo" id="momAnillo" aria-hidden="true"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="19"/><circle cx="22" cy="22" r="19" class="arco"/></svg><span></span></div>
+    </header>
+    <div id="momFinal" class="final" hidden>
+      <b>¡Listo! Enviaste todos los cuestionarios de este momento.</b>
+      <span>Gracias por participar. Ya puedes cerrar esta ventana.</span>
+    </div>
+    <ol id="momLista" class="instrumentos"></ol>
+  </section>
+
+  <!-- 5 · Encuesta -->
+  <section id="vEncuesta" class="vista encuesta" hidden>
+    <div class="enc-barra" id="encBarra">
+      <button type="button" class="enlace volver" id="btnVolver">← Cuestionarios</button>
+      <div class="enc-progreso"><div class="enc-progreso-fill" id="encFill"></div></div>
+      <span class="mono enc-cuenta" id="encCuenta"></span>
+    </div>
+    <header class="enc-cabeza">
+      <p class="kicker" id="encKicker"></p>
+      <h1 id="encTitulo"></h1>
+      <details class="instrucciones" open>
+        <summary>Instrucciones</summary>
+        <p id="encInstr"></p>
+      </details>
+      <p class="enunciado" id="encEnunciado"></p>
+    </header>
+    <ol id="encItems" class="items"></ol>
+    <footer class="enc-pie">
+      <span class="guardado mono" id="encGuardado" role="status"></span>
+      <button class="btn" type="button" id="btnEnviar">Enviar<span class="largo">cuestionario</span> <span class="flecha">→</span></button>
+    </footer>
+  </section>
+
+  <!-- 6 · Cerrado / sin momento -->
+  <section id="vCerrado" class="vista mensaje" hidden>
+    <div class="tarjeta mensaje-tarjeta">
+      <p class="kicker" id="cerKicker">Fuera de plazo</p>
+      <h1 id="cerTitulo">Este momento no está abierto.</h1>
+      <p id="cerTexto">Tus respuestas guardadas se conservan. Cuando tu profesor lo abra podrás continuar con el mismo código.</p>
+      <button class="btn sec" type="button" id="btnReintentar">Volver a intentar</button>
+    </div>
+  </section>
+
+  <section id="vCargando" class="vista cargando"><div class="regla cargando-regla"></div><p class="mono">Cargando…</p></section>
+</main>
+
+<dialog id="dlgEnviar">
+  <form method="dialog" class="dlg">
+    <p class="kicker">Confirmar envío</p>
+    <h2>¿Enviar <span id="dlgSigla"></span>?</h2>
+    <p>Una vez enviado <b>no podrás modificar tus respuestas</b>. Si necesitas corregir algo, tendrás que pedirle al equipo investigador que lo reabra.</p>
+    <div class="acciones">
+      <button class="btn sec" value="no">Revisar</button>
+      <button class="btn" value="si">Enviar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module" src="js/alumno.js"></script>
+</body>
+</html>

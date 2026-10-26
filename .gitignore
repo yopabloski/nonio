@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+*.xlsx
+*.csv
+*.zip
+*.json
+!package.json
+!firebase.json
+.firebase/
+Claude outputs/
+*.log
+.firebaserc
