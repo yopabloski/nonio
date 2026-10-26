@@ -63,5 +63,5 @@ firebase emulators:start --only auth,firestore
 ## Recomendaciones
 
 - Prueba el flujo completo con 2 o 3 cuentas antes de la aplicación real.
-- No abras el panel docente y la app del alumno en el **mismo perfil** del navegador: el inicio de sesión con Google reemplaza la sesión anónima del alumno.
+- El panel docente y la app del alumno mantienen sesiones separadas, así que se pueden usar en el mismo navegador. Para probar como dos alumnos distintos, usa una ventana de incógnito.
 - Descarga un **Respaldo completo (.json)** después de cerrar cada momento.

@@ -20,7 +20,11 @@ async function sdk() {
     import(`${SDK}/firebase-auth.js`),
     import(`${SDK}/firebase-firestore.js`)
   ]);
-  const instancia = app.initializeApp(firebaseConfig);
+  // Alumno y panel usan instancias separadas: así la sesión anónima del
+  // alumno y la sesión Google del docente no se pisan en el mismo navegador
+  // (entrar o salir del panel en otra pestaña cerraba la sesión del alumno).
+  const nombre = (typeof location !== 'undefined' && /panel(\.html)?$/.test(location.pathname)) ? 'nonio-docente' : 'nonio-alumno';
+  const instancia = app.initializeApp(firebaseConfig, nombre);
   const a = auth.getAuth(instancia);
   const db = fs.getFirestore(instancia);
   if (useEmulators) {
@@ -176,9 +180,27 @@ async function escribirRespuesta(correo, momentoId, instId, respuestas, estado, 
   try {
     await F.setDoc(ref, datos, { merge: true });
   } catch (e) {
-    if (denegado(e)) throw error('no-permitido', 'No fue posible guardar: el momento puede estar cerrado o el cuestionario ya fue enviado.');
+    if (denegado(e)) throw await motivoBloqueo({ correo, momentoId, instId, codigo, ref });
     throw e;
   }
+}
+
+// Cuando las reglas rechazan una escritura, averigua la causa concreta para
+// decirle al alumno qué hacer. Cada lectura es tolerante a fallos.
+async function motivoBloqueo({ correo, momentoId, instId, codigo, ref }) {
+  const { db, F } = await sdk();
+  const leer = async r => { try { const x = await F.getDoc(r); return x.exists() ? x.data() : null; } catch { return undefined; } };
+  const part = await leer(F.doc(db, paths.participantes, correo));
+  if (!part) return error('sesion', 'Tu sesión ya no es válida en este dispositivo. Sal y vuelve a ingresar con tu correo, RUT y el código: tus respuestas guardadas no se pierden.');
+  const doc = await leer(ref);
+  if (doc?.estado === 'enviado') return error('enviado', 'Este cuestionario ya fue enviado y no se puede modificar.');
+  const config = await leer(F.doc(db, paths.config, 'estudio'));
+  const mom = config?.momentos?.[momentoId];
+  if (mom && mom.estado !== 'abierto') return error('cerrado', 'La sesión fue cerrada por el equipo investigador. Tus respuestas quedaron guardadas hasta la última que se registró.');
+  const cod = codigo ? await leer(F.doc(db, paths.codigos, codigo)) : null;
+  if (!cod || cod.momentoId !== momentoId) return error('codigo', 'El código de acceso cambió. Sal y vuelve a ingresar con el código nuevo: tus respuestas guardadas no se pierden.');
+  if (!(part.consentimiento?.acepta)) return error('consentimiento', 'Falta tu consentimiento para guardar respuestas. Vuelve a la lista de cuestionarios.');
+  return error('no-permitido', `No fue posible guardar ${instId.toUpperCase()}: este cuestionario no corresponde a tu bloque en esta sesión. Vuelve a la lista de cuestionarios.`);
 }
 
 export const guardarRespuestas = (c, m, i, r, o) => escribirRespuesta(c, m, i, r, 'borrador', o);

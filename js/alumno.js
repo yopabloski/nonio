@@ -398,7 +398,14 @@ async function arrancar() {
 
   try {
     const ses = await store.sesionActual();
-    if (ses) {
+    const codUrl = normalizarCodigo(new URLSearchParams(location.search).get('codigo') || '');
+    if (ses && codUrl && codUrl !== ses.codigo) {
+      // Llega con el enlace de otra sesión: se vuelve a ingresar con el código nuevo.
+      await store.salir();
+      $('#inCorreo').value = ses.participante.correo || '';
+      $('#inNombre').value = ses.participante.nombre || '';
+      mostrar('vIngreso');
+    } else if (ses) {
       S.participante = ses.participante;
       S.momentoId = ses.momentoId;
       S.codigo = ses.codigo;
