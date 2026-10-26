@@ -1,11 +1,38 @@
 /* Nonio · vista del alumno. Mobile first. */
 
+/* Paleta de la encuesta (alumno): Bubblegum Pink, Lavender Blush,
+   Coffee Bean y Black Cherry. Solo redefine los tokens de base.css; el panel
+   docente conserva su paleta. Contrastes AA: tinta/papel 14,5:1;
+   tinta-3/papel 5,2:1; acento sobre tinta 5,4:1. */
+:root{
+  --tinta:#22181C;
+  --tinta-2:#4A3B40;
+  --tinta-3:#6E5C62;
+  --papel:#F6E8EA;
+  --papel-2:#EDD8DC;
+  --hoja:#FFFBFB;
+  --linea:rgba(34,24,28,.14);
+  --linea-2:rgba(34,24,28,.28);
+  --maiz:#F45B69;
+  --maiz-suave:#FCD5D9;
+  --granada:#5A0001;
+  --granada-suave:#F3D2D4;
+  --sombra:0 1px 0 rgba(34,24,28,.06), 0 10px 30px -18px rgba(34,24,28,.35);
+}
+body::before{
+  background-image:
+    linear-gradient(to right, rgba(90,0,1,.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(90,0,1,.035) 1px, transparent 1px);
+}
+.campo input[aria-invalid="true"]{background:#FFF5F6}
+.banda-demo{background:repeating-linear-gradient(-45deg,var(--maiz) 0 12px,#F7808B 12px 24px)}
+
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .enlace{background:none;border:0;padding:6px 0;font:600 13px var(--texto);text-decoration:underline;text-underline-offset:3px;color:var(--tinta-2)}
 
 .barra{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:14px 16px;border-bottom:1px solid var(--linea);background:rgba(238,241,236,.85);
+  padding:14px 16px;border-bottom:1px solid var(--linea);background:rgba(246,232,234,.88);
   backdrop-filter:saturate(1.2) blur(8px);position:sticky;top:0;z-index:30;
 }
 .sesion-chip{display:flex;align-items:center;gap:12px;font-size:12px;min-width:0}
@@ -90,7 +117,7 @@ main{max-width:1120px;margin:0 auto;padding:22px 16px 90px}
 .avance-anillo span{position:absolute;inset:0;display:grid;place-items:center;font:600 15px var(--mono)}
 .final{display:grid;gap:4px;padding:16px 18px;margin-bottom:16px;border-radius:12px;background:var(--tinta);color:var(--hoja);border-left:8px solid var(--maiz)}
 .final b{font:600 20px/1.2 var(--display)}
-.final span{color:#C9D2DB;font-size:14px}
+.final span{color:#E3CDD2;font-size:14px}
 
 .instrumentos{list-style:none;padding:0;margin:0;display:grid;gap:14px}
 .inst{
@@ -106,7 +133,7 @@ main{max-width:1120px;margin:0 auto;padding:22px 16px 90px}
 .inst-barra{height:6px;border-radius:6px;background:var(--papel-2);overflow:hidden;margin-top:12px}
 .inst-barra i{display:block;height:100%;background:var(--c);border-radius:6px;transition:width .6s}
 .inst .btn{width:100%}
-.inst.enviado{background:linear-gradient(90deg,var(--hoja),#F2F6F1)}
+.inst.enviado{background:linear-gradient(90deg,var(--hoja),#FBEFF1)}
 .inst.enviado .btn{background:transparent;color:var(--ok);border-color:var(--ok-suave);box-shadow:none;cursor:default}
 @media (min-width:720px){
   .instrumentos{grid-template-columns:1fr 1fr}
@@ -117,10 +144,10 @@ main{max-width:1120px;margin:0 auto;padding:22px 16px 90px}
 .encuesta{--c:var(--tinta);max-width:820px;margin:0 auto}
 .enc-barra{
   position:sticky;top:var(--alto-barra,67px);z-index:20;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;
-  margin:-22px -16px 0;padding:10px 16px;background:rgba(238,241,236,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--linea);
+  margin:-22px -16px 0;padding:10px 16px;background:rgba(246,232,234,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--linea);
 }
 .enc-progreso{height:8px;border-radius:8px;background:var(--papel-2);overflow:hidden;position:relative}
-.enc-progreso::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to right,transparent 0 calc(10% - 1px),rgba(15,29,43,.18) calc(10% - 1px) 10%)}
+.enc-progreso::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to right,transparent 0 calc(10% - 1px),rgba(34,24,28,.18) calc(10% - 1px) 10%)}
 .enc-progreso-fill{height:100%;width:0;background:var(--c);transition:width .35s cubic-bezier(.2,.8,.2,1)}
 .enc-cuenta{font-size:12px;font-weight:600}
 .volver{font-size:12px;white-space:nowrap}
@@ -179,7 +206,7 @@ main{max-width:1120px;margin:0 auto;padding:22px 16px 90px}
 
 .enc-pie{
   position:sticky;bottom:0;z-index:20;margin:22px -16px 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
-  display:flex;gap:12px;align-items:center;justify-content:space-between;background:rgba(251,251,248,.95);backdrop-filter:blur(8px);border-top:1px solid var(--linea);
+  display:flex;gap:12px;align-items:center;justify-content:space-between;background:rgba(255,251,251,.95);backdrop-filter:blur(8px);border-top:1px solid var(--linea);
 }
 .guardado{font-size:12px;color:var(--tinta-3)}
 .guardado.error{color:var(--granada);font-weight:600}
