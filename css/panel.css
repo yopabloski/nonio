@@ -116,7 +116,29 @@
 .chip small{font:500 11px var(--mono);color:var(--tinta-3)}
 .codigo-fila{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end}
 .codigo-fila .campo input{font-family:var(--mono);font-weight:700;letter-spacing:.06em;height:44px}
-.enlace-alumno{display:flex;gap:8px;align-items:center;font:12px var(--mono);color:var(--tinta-3);word-break:break-all}
+.enlace-alumno{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--papel);border:1px solid var(--linea);border-radius:10px;padding:10px 12px}
+.enlace-texto{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 260px}
+.enlace-texto .kicker{margin:0}
+.enlace-url{font:12.5px var(--mono);color:var(--tinta-2);overflow-wrap:anywhere}
+.enlace-acciones{display:flex;gap:8px;flex-shrink:0}
+.enlace-acciones .btn{white-space:nowrap}
+.vacio-enlace{font:12px var(--mono);color:var(--tinta-3)}
+/* QR para proyectar */
+body > dialog.dlg-qr{width:min(1100px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px)}
+.qr-hoja{padding:22px 28px 30px}
+.qr-cabeza{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.qr-cabeza .kicker{margin:0}
+.qr-botones{display:flex;gap:8px}
+.qr-cuerpo{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:center;margin-top:18px}
+.qr-imagen svg{display:block;width:100%;height:auto;max-height:70dvh;border-radius:12px;border:1px solid var(--linea)}
+.qr-info h2{font-size:clamp(28px,4vw,52px);line-height:1.05;margin:0 0 14px}
+.qr-info p{font-size:clamp(15px,1.6vw,20px)}
+.qr-codigo{font-size:clamp(30px,4.6vw,64px)!important;font-weight:700;letter-spacing:.06em;color:var(--tinta)!important;background:var(--maiz-suave);border-radius:10px;padding:10px 16px;display:inline-block;margin:6px 0 14px}
+.qr-url{font-size:clamp(13px,1.3vw,17px)!important;overflow-wrap:anywhere}
+dialog.dlg-qr:fullscreen{width:100vw;height:100vh;max-height:none;border-radius:0;display:flex;align-items:center;justify-content:center}
+dialog.dlg-qr:fullscreen .qr-hoja{width:min(1400px,100%)}
+dialog.dlg-qr:fullscreen .qr-imagen svg{max-height:78vh}
+@media (max-width:760px){.qr-cuerpo{grid-template-columns:1fr;gap:18px}}
 .momento-card footer{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid var(--linea);font-size:12px;color:var(--tinta-3)}
 .btn-texto{background:none;border:0;padding:4px 0;font:600 12px var(--texto);color:var(--granada);text-decoration:underline;text-underline-offset:3px}
 

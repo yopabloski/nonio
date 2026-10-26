@@ -7,6 +7,26 @@ import { leerNomina, textoATabla, semillaNueva, seccionDesdeArchivo } from './do
 import { construirBases, aSalida, aCSV, libroDeCodigos, sintaxisSPSS, idSeudonimo, normalizarRespuestas, LEEME } from './domain/exportar.js';
 import { columnas, activarTooltips, fmt } from './ui/graficos.js';
 import { crearAnalisis } from './ui/analisis.js';
+import qrcode from './vendor/qrcode.js';
+
+// QR para proyectar en la sala: SVG nítido a cualquier tamaño.
+function qrSVG(texto) {
+  const q = qrcode(0, 'M');
+  q.addData(texto);
+  q.make();
+  const n = q.getModuleCount(), borde = 4, t = n + borde * 2;
+  let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + borde} ${r + borde}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${t} ${t}" role="img" aria-label="Código QR del enlace" shape-rendering="crispEdges"><rect width="${t}" height="${t}" fill="#fff"/><path d="${d}" fill="#0F1D2B"/></svg>`;
+}
+function mostrarQR({ url, codigo, momento }) {
+  const dlg = $('#dlgQR');
+  $('#qrMomento').textContent = momento;
+  $('#qrImagen').innerHTML = qrSVG(url);
+  $('#qrCodigo').textContent = codigo;
+  $('#qrUrl').textContent = url.replace(/^https?:\/\//, '');
+  dlg.showModal();
+}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -235,7 +255,12 @@ function pintarMomentos() {
           <button class="btn sec chico" type="button" data-accion="generar">Generar</button>
           <button class="btn chico" type="button" data-accion="guardar-codigo">Guardar código</button>
         </div>
-        ${codigo ? `<div class="enlace-alumno"><span>Enlace directo: ${esc(base)}?codigo=${esc(codigo)}</span><button class="mini" type="button" data-accion="copiar" data-url="${esc(base)}?codigo=${esc(codigo)}">Copiar</button></div>` : '<div class="enlace-alumno">Sin código, los alumnos no pueden entrar a este momento.</div>'}
+        ${codigo ? `<div class="enlace-alumno">
+          <div class="enlace-texto"><span class="kicker">Enlace para alumnos</span><span class="enlace-url">${esc(base)}?codigo=${esc(codigo)}</span></div>
+          <div class="enlace-acciones">
+            <button class="btn sec chico" type="button" data-accion="copiar" data-url="${esc(base)}?codigo=${esc(codigo)}">Copiar</button>
+            <button class="btn chico" type="button" data-accion="qr" data-url="${esc(base)}?codigo=${esc(codigo)}" data-codigo="${esc(codigo)}">Mostrar QR</button>
+          </div></div>` : '<div class="enlace-alumno vacio-enlace">Sin código, los alumnos no pueden entrar a este momento.</div>'}
       </div>
       <footer>
         <span>${enviados} cuestionarios enviados · ${esContrabalanceado(b) ? ORDENES.map(o => `orden ${o}: ~${instrumentosPara(b, m, o).reduce((a, id) => a + INSTRUMENTO[id].minutos, 0)} min`).join(' · ') : `${m.instrumentos.reduce((a, id) => a + INSTRUMENTO[id].minutos, 0)} min estimados`}</span>
@@ -375,7 +400,10 @@ function prepararMomentos() {
         pintar();
       } catch (err) { toast(err.message, true); }
     } else if (acc === 'copiar') {
-      try { await navigator.clipboard.writeText(e.target.dataset.url); toast('Enlace copiado.'); } catch { toast('No se pudo copiar.', true); }
+      try { await navigator.clipboard.writeText(e.target.closest('[data-url]').dataset.url); toast('Enlace copiado.'); } catch { toast('No se pudo copiar.', true); }
+    } else if (acc === 'qr') {
+      const b = e.target.closest('[data-url]');
+      mostrarQR({ url: b.dataset.url, codigo: b.dataset.codigo, momento: m.nombre });
     } else if (acc === 'eliminar') {
       if (!(await confirmar({ titulo: `¿Eliminar ${m.nombre}?`, texto: 'Se quita de la configuración al guardar.', si: 'Eliminar', peligro: true }))) return;
       delete S.borrador.momentos[m.id];
@@ -725,6 +753,13 @@ async function abrirPanel(docente) {
 async function arrancar() {
   $('#nav').addEventListener('click', e => { const b = e.target.closest('button[data-sec]'); if (b) irA(b.dataset.sec); });
   $('#btnRefrescar').addEventListener('click', cargar);
+  $('#qrPantalla').addEventListener('click', () => {
+    const d = $('#dlgQR');
+    if (document.fullscreenElement) document.exitFullscreen();
+    else d.requestFullscreen?.().catch(() => {});
+  });
+  $('#dlgQR').addEventListener('close', () => { if (document.fullscreenElement) document.exitFullscreen(); });
+  document.addEventListener('fullscreenchange', () => { $('#qrPantalla').textContent = document.fullscreenElement ? 'Salir de pantalla completa' : 'Pantalla completa'; });
   $('#btnSalirDocente').addEventListener('click', async () => { await store.salirDocente(); location.reload(); });
   $('#btnSembrar').addEventListener('click', async () => { await store.sembrarDemo(150); toast('Datos de ejemplo cargados.'); cargar(); });
   $('#btnVaciar').addEventListener('click', async () => {

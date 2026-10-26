@@ -219,6 +219,27 @@
 
 <div class="tip" id="tip" role="tooltip" hidden></div>
 
+<dialog id="dlgQR" class="dlg-qr">
+  <form method="dialog" class="qr-hoja">
+    <div class="qr-cabeza">
+      <p class="kicker">Nonio · <span id="qrMomento"></span></p>
+      <div class="qr-botones">
+        <button class="btn sec chico" type="button" id="qrPantalla">Pantalla completa</button>
+        <button class="btn chico" value="cerrar">Cerrar</button>
+      </div>
+    </div>
+    <div class="qr-cuerpo">
+      <div class="qr-imagen" id="qrImagen"></div>
+      <div class="qr-info">
+        <h2>Escanea para responder</h2>
+        <p>Entra con tu correo @udd.cl, tu RUT y este código:</p>
+        <p class="qr-codigo mono" id="qrCodigo"></p>
+        <p class="qr-url mono" id="qrUrl"></p>
+      </div>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dlgConfirmar">
   <form method="dialog" class="dlg">
     <p class="kicker" id="dlgKicker">Confirmar</p>
